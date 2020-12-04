@@ -50,18 +50,6 @@ def resource_path(relative):
     return os.path.join(relative)
 
 
-def make_wide(formatter, w=120, h=36):
-    """Return a wider HelpFormatter, if possible."""
-    try:
-        # https://stackoverflow.com/a/5464440
-        # beware: "Only the name of this class is considered a public API."
-        kwargs = {'width': w, 'max_help_position': h}
-        formatter(None, **kwargs)
-        return lambda prog: formatter(prog, **kwargs)
-    except TypeError:
-        warnings.warn("argparse help formatter failed, falling back.")
-        return formatter
-
 def normalizefn(text, delim='-'):
     """Normaliza una cadena para ser usada como nombre de archivo.
 
