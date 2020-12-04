@@ -35,6 +35,7 @@ try:
     import os
     import logging
     import tempfile
+    import time
     from urllib.parse import urlparse
     from cotizaciones_bcu import cotizaciones_bcu
     from configparser import ConfigParser
@@ -45,6 +46,7 @@ try:
     from globals import __appdesc__
     from globals import __copyright__
     from globals import __version__
+    from globals import __author__
 
 except ImportError as err:
     modulename = err.args[0].partition("'")[-1].rpartition("'")[0]
@@ -53,9 +55,32 @@ except ImportError as err:
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.:]+')
 
+class Log:
 
-def loginfo(msg):
-    logging.info(msg.replace("|", " "))
+    def __init__(self, outputpath, loglevel, quiet = True):
+
+        logging.basicConfig(filename=os.path.join(outputpath, 'scrapper.log'),
+                            level=getattr(logging, loglevel.upper(), None),
+                            format='%(asctime)s|%(levelname)s|%(message)s',
+                            datefmt='%Y/%m/%d %I:%M:%S',
+                            filemode='w')
+        self.quiet = quiet
+
+
+    def info(self, msg):
+
+        if not self.quiet:
+            print(msg)
+
+        logging.info(msg.replace("|", " "))
+
+    def error(self, msg):
+        msg = "!!! Error ---> {0}".format(msg.replace("|", " "))
+        if not self.quiet:
+            print(msg)
+
+        logging.error("Error: {0}".format(msg))
+
 
 def show_data(available_data):
 
@@ -102,10 +127,27 @@ class ProcessFlag():
 
 def main():
 
+    title = """
+  ______    ______   _______    ______   _______   _______   ________  _______
+ /      \  /      \ /       \  /      \ /       \ /       \ /        |/       \\
+/$$$$$$  |/$$$$$$  |$$$$$$$  |/$$$$$$  |$$$$$$$  |$$$$$$$  |$$$$$$$$/ $$$$$$$  |
+$$ \__$$/ $$ |  $$/ $$ |__$$ |$$ |__$$ |$$ |__$$ |$$ |__$$ |$$ |__    $$ |__$$ |
+$$      \ $$ |      $$    $$< $$    $$ |$$    $$/ $$    $$/ $$    |   $$    $$<
+ $$$$$$  |$$ |   __ $$$$$$$  |$$$$$$$$ |$$$$$$$/  $$$$$$$/  $$$$$/    $$$$$$$  |
+/  \__$$ |$$ \__/  |$$ |  $$ |$$ |  $$ |$$ |      $$ |      $$ |_____ $$ |  $$ |
+$$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
+ $$$$$$/   $$$$$$/  $$/   $$/ $$/   $$/ $$/       $$/       $$$$$$$$/ $$/   $$/
+
+{0} (v.{1})
+{2}
+"""
+
     cmdparser = cli_options.init_argparse()
 
     try:
         args = cmdparser.parse_args()
+        if not args.quiet:
+            print(title.format(__appdesc__, __version__, __author__))
     except IOError as msg:
         args.error(str(msg))
 
@@ -114,10 +156,11 @@ def main():
     else:
         outputpath = ''
 
-    logfile = os.path.join(outputpath, 'scrapper.log')
-    log_level = getattr(logging, args.loglevel.upper(), None)
-    logging.basicConfig(filename=logfile, level=log_level, format='%(asctime)s|%(levelname)s|%(message)s', datefmt='%Y/%m/%d %I:%M:%S', filemode='w')
-    logging.info("Starting {0} - {1} (v{2})".format(__appname__, __appdesc__, __version__))
+    log = Log(outputpath=outputpath,
+             loglevel=args.loglevel,
+             quiet=args.quiet
+    )
+    log.info("Starting {0} - {1} (v{2})".format(__appname__, __appdesc__, __version__))
 
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
@@ -127,14 +170,14 @@ def main():
 
     cfgfile = os.path.join(application_path, 'scrapper.cfg')
 
-    loginfo("Loading config: {}".format(cfgfile))
+    log.info("Loading config: {}".format(cfgfile))
     config = ConfigParser()
     try:
         config.read_file(codecs.open(cfgfile, "r", "utf8"))
     except FileNotFoundError:
         errormsg = "No existe el archivo de configuración ({0})".format(cfgfile)
         print(errormsg)
-        logging.error(errormsg)
+        log.error(errormsg)
         sys.exit(-1)
 
     available_data = []
@@ -150,35 +193,53 @@ def main():
         show_data(available_data)
         sys.exit(0)
 
-    if args.data:
+    if not args.data:
+        log.error("scrapping model not specified")
+        sys.exit(-1)
 
-        datas = [p for p in available_data if p[0] == args.data or args.data == "all"]
+    datas = [p[0] for p in available_data if p[0] == args.data]
+    if datas:
+        data = datas[0]
         workpath = tempfile.mkdtemp()
         driver = get_chrome_driver(download_folder=workpath, show=args.show_browser)
-        for p, n in datas:
 
-            loginfo("Data: {}".format(p))
+        log.info("Data scrapping model: {}".format(data))
 
-            # pf = ProcessFlag(p, outputpath)
+        section        = "data:" + data
+        function_name  = config[section]["function"]
+        if function_name in globals():
+            function = globals()[function_name]
+            log.info("calling: {}".format(function_name))
+            start_time = time.time()
+            datos = function(driver=driver,
+                             log=log,
+                             parametros=config[section],
+                             tmpdir=workpath)
 
-            section        = "data:" + p
-            function_name  = config[section]["function"]
-            loginfo("call: {}".format(function_name))
-            if function_name in globals():
-                function = globals()[function_name]
-                datos = function(driver=driver,
-                                 parametros=config[section],
-                                 tmpdir=workpath)
+            elapsed_time = round(time.time() - start_time, 2)
+            n = len(datos)
+            if n > 1:
                 tablestr = tabulate(
                                 tabular_data        = datos[1:],
                                 headers             = datos[0],
-                                tablefmt            = args.output_format,
-                                stralign            = "left",
-                                numalign            = "rigth"
+                                tablefmt            = args.outputtype,
+                                stralign            = None if args.outputtype == "csv" else "left",
+                                numalign            = None if args.outputtype == "csv" else "rigth"
                     )
-                print(tablestr)
+                if args.outputfile:
+                    data_file = os.path.join(args.outputpath, args.outputfile)
+                    with open(data_file), "w") as f:
+                        f.write(tablestr)
+
+                    log.info("Data saved: {0}".format(data_file))
+                else:
+                     print(tablestr)
+                log.info("Found {0} items in {1} secs".format(n, elapsed_time))
+            else:
+                log.error("Data not found in {0} secs".format(elapsed_time))
 
     else:
+        log.error("model {0} does not exist".format(args.data))
         cmdparser.print_help()
 
 if __name__ == "__main__":

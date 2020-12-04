@@ -21,6 +21,7 @@ from globals import __appname__
 from globals import __appdesc__
 from globals import __copyright__
 from globals import __version__
+from globals import __author__
 
 
 def init_argparse():
@@ -29,7 +30,7 @@ def init_argparse():
                                         description="%s\n%s\n" % (__appdesc__, __copyright__),
                                         epilog="",
                                         add_help=True,
-                                        formatter_class=make_wide(argparse.HelpFormatter, w=80, h=42)
+                                        formatter_class=make_wide(argparse.HelpFormatter, w=80, h=48)
     )
 
     opciones = {    "data": {
@@ -51,24 +52,31 @@ def init_argparse():
                     },
                     "--output-path -o": {
                                 "type":     str,
-                                "action":     "store",
+                                "action":   "store",
                                 "dest":     "outputpath",
-                                "default":    None,
-                                "help":        _("Carpeta de outputh de los datos descargados")
+                                "default":   ".",
+                                "help":       _("Carpeta de outputh de los datos capturados")
                     },
-                    "--output-format -f": {
+                    "--output-file -f": {
                                 "type":     str,
-                                "action":     "store",
-                                "dest":     "output_format",
-                                "default":    "psql",
-                                "help":        _("Formato de salida")
+                                "action":   "store",
+                                "dest":     "outputfile",
+                                "default":    None,
+                                "help":        _("Nombre del archivo de output de los datos capturados")
+                    },
+                    "--output-type -t": {
+                                "type":     str,
+                                "action":   "store",
+                                "dest":     "outputtype",
+                                "default":  "psql",
+                                "help":     _("Formato de salida")
                     },
                     "--log-level -n": {
                                 "type":     str,
-                                "action":     "store",
+                                "action":   "store",
                                 "dest":     "loglevel",
-                                "default":    "info",
-                                "help":        _("Nivel de log")
+                                "default":  "info",
+                                "help":     _("Nivel de log")
                     },
                     "--log-file -l": {
                             "type":	str,
@@ -102,7 +110,7 @@ def init_argparse():
 
 
 
-def make_wide(formatter, w=120, h=36):
+def make_wide(formatter, w=120, h=40):
     """Return a wider HelpFormatter, if possible."""
     try:
         # https://stackoverflow.com/a/5464440

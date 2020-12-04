@@ -1,5 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,20 +6,21 @@ import xml.etree.ElementTree as ET
 import os
 import time
 from pprint import pprint
+import glob
 
 
-def cotizaciones_bcu(driver, parametros, tmpdir = os.getcwd()):
+def cotizaciones_bcu(driver, parametros, log, tmpdir = os.getcwd()):
 
-    print("Conectandose con la página")
+    log.info("connect to: {0}".format(parametros["url"]))
     driver.get(parametros["url"])
 
-    print("Seleccionamos todas las monedas")
+    log.info("Select all currencies")
     element = WebDriverWait(driver, 10).until(
         EC.visibility_of_element_located((By.XPATH, parametros["boton_xpath"]))
     )
     element.click()
 
-    print("Descargamos el xml")
+    log.info("Download xml file")
     element = WebDriverWait(driver, 10).until(
         EC.visibility_of_element_located((By.XPATH, parametros["xml_xpath"]))
     )
@@ -29,9 +29,7 @@ def cotizaciones_bcu(driver, parametros, tmpdir = os.getcwd()):
     driver.quit()
 
 
-    print("Procesamos los datos")
-    # Lectura del archivo descargado
-    import glob
+    log.info("Reading data")
     # print(download_folder)
     datos = [('Fecha', 'ISO', 'Nombre', 'TCC', 'TCV', 'Arb')]
     for file in glob.glob("{0}/Cotizaciones*.xml".format(tmpdir)):
