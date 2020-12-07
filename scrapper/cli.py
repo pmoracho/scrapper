@@ -29,6 +29,12 @@ Herramienta de línea de comandos para extracción de datos de páginas útiles
 
 try:
     import sys
+    import gettext
+    from gettext import gettext as _
+    gettext.textdomain('scrapper')
+
+
+
     import cli_options
     import codecs
     import re
@@ -36,11 +42,11 @@ try:
     import logging
     import tempfile
     import time
+    from cli_options import make_wide
     from urllib.parse import urlparse
     from cotizaciones_bcu import cotizaciones_bcu
     from configparser import ConfigParser
     from tabulate import tabulate
-    from tools import make_wide
     from drivers import get_chrome_driver
     from globals import __appname__
     from globals import __appdesc__
@@ -172,9 +178,13 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
 
     log.info("Loading config: {}".format(cfgfile))
     config = ConfigParser()
+
+    # with open(os.path.join(os.path.dirname(__file__), 'scrapper.cfg')) as f:
     try:
         config.read_file(codecs.open(cfgfile, "r", "utf8"))
     except FileNotFoundError:
+
+
         errormsg = "No existe el archivo de configuración ({0})".format(cfgfile)
         print(errormsg)
         log.error(errormsg)
@@ -228,7 +238,7 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
                     )
                 if args.outputfile:
                     data_file = os.path.join(args.outputpath, args.outputfile)
-                    with open(data_file), "w") as f:
+                    with open(data_file, "w") as f:
                         f.write(tablestr)
 
                     log.info("Data saved: {0}".format(data_file))

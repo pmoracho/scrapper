@@ -1,7 +1,6 @@
 import gettext
 from gettext import gettext as _
 gettext.textdomain('scrapper')
-
 def _my_gettext(s):
     """Traducir algunas cadenas de argparse."""
     current_dict = {'usage: ': 'uso: ',
@@ -37,6 +36,7 @@ def init_argparse():
                                 "type": str,
                                 "nargs": '?',
                                 "action": "store",
+                                 "default": "cotizaciones-bcu",
                                 "help": _("Datos a capturar")
                     },
                     "--version -v": {
