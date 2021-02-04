@@ -9,7 +9,7 @@ from pprint import pprint
 import glob
 
 
-def cotizaciones_bcu(driver, parametros, log, tmpdir = os.getcwd()):
+def cotizaciones_bcu(driver, parametros, log, inputfile=None, tmpdir=os.getcwd()):
 
     log.info("connect to: {0}".format(parametros["url"]))
     driver.get(parametros["url"])

@@ -45,7 +45,9 @@ try:
     from cli_options import make_wide
     from urllib.parse import urlparse
     from cotizaciones_bcu import cotizaciones_bcu
+    from datos_marca_inpi import datos_marca_inpi
     from configparser import ConfigParser
+    import traceback
     from tabulate import tabulate
     from drivers import get_chrome_driver
     from globals import __appname__
@@ -205,6 +207,7 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
 
     if not args.data:
         log.error("scrapping model not specified")
+        cmdparser.print_help()
         sys.exit(-1)
 
     datas = [p[0] for p in available_data if p[0] == args.data]
@@ -217,18 +220,24 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
 
         section        = "data:" + data
         function_name  = config[section]["function"]
+
         if function_name in globals():
             function = globals()[function_name]
             log.info("calling: {}".format(function_name))
             start_time = time.time()
-            datos = function(driver=driver,
-                             log=log,
-                             parametros=config[section],
-                             tmpdir=workpath)
+            try:
+                datos = function(driver=driver,
+                                log=log,
+                                parametros=config[section],
+                                inputfile=args.inputfile,
+                                tmpdir=workpath)
+            except Exception:
+                traceback.print_exc()
+
 
             elapsed_time = round(time.time() - start_time, 2)
-            n = len(datos)
-            if n > 1:
+            n = len(datos) - 1
+            if n > 0:
                 tablestr = tabulate(
                                 tabular_data        = datos[1:],
                                 headers             = datos[0],
@@ -247,6 +256,8 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
                 log.info("Found {0} items in {1} secs".format(n, elapsed_time))
             else:
                 log.error("Data not found in {0} secs".format(elapsed_time))
+        else:
+            log.info("Model: {} not implemented".format(data))
 
     else:
         log.error("model {0} does not exist".format(args.data))

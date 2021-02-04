@@ -36,7 +36,7 @@ def init_argparse():
                                 "type": str,
                                 "nargs": '?',
                                 "action": "store",
-                                 "default": "cotizaciones-bcu",
+                                 "default": "",
                                 "help": _("Datos a capturar")
                     },
                     "--version -v": {
@@ -63,6 +63,13 @@ def init_argparse():
                                 "dest":     "outputfile",
                                 "default":    None,
                                 "help":        _("Nombre del archivo de output de los datos capturados")
+                    },
+                    "--input-file -i": {
+                                "type":     str,
+                                "action":   "store",
+                                "dest":     "inputfile",
+                                "default":   None,
+                                "help":      _("Nombre del archivo de entrada de datos")
                     },
                     "--output-type -t": {
                                 "type":     str,
