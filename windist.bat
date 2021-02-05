@@ -1,31 +1,15 @@
 @echo off
 
-REM --------------------------------------------------------
-REM Bat para la generación del paquete de deploy de scrapper
-REM --------------------------------------------------------
-
-
-REM --------------------------------------------------------
-REM Creación del paquete para distribuir
-REM --------------------------------------------------------
 @echo --------------------------------------------------------
-@echo Generando distribucion con scrapper..
-@echo --------------------------------------------------------
+@echo Creación del paquete para distribuir
+@echo--------------------------------------------------------
 @pyinstaller scrapper\cli.py --onedir --noupx --clean --noconfirm -n scrapper
 
 @echo --------------------------------------------------------
 @echo Copiando archivos y herramientas adicionales..
 @echo --------------------------------------------------------
+@copy scrapper.cfg dist\scrapper\scrapper.cfg
 
-REM --------------------------------------------------------
-REM Ini de la applicación
-REM !! Copiar manualmente si es necesario
-REM --------------------------------------------------------
-REM @copy scrapper\scrapper.cfg dist\scrapper\scrapper.cfg
-
-REM --------------------------------------------------------
-REM Eliminar archivos de trabajo
-REM --------------------------------------------------------
 @echo --------------------------------------------------------
 @echo Eliminando archivos de trabajo ..
 @echo --------------------------------------------------------
@@ -33,5 +17,13 @@ REM --------------------------------------------------------
 @del *.spec /S /F /Q
 
 @echo --------------------------------------------------------
-@echo Carpeta a distribuir dist\pboletin..
+@echo Descarga del chrome driver versión 88..
+@echo --------------------------------------------------------
+@curl https://chromedriver.storage.googleapis.com/88.0.4324.96/chromedriver_win32.zip --output chromedriver_win32.zip
+
+@echo --------------------------------------------------------
+@echo Descomprimir chromedriver_win32.zip en la carpeta
+@echo ./dist/scrapper
+@echo
+@echo NOTA: https://chromedriver.chromium.org/downloads
 @echo --------------------------------------------------------
