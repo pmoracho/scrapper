@@ -234,8 +234,8 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
             except Exception:
                 traceback.print_exc()
 
+            elapsed_time = time.strftime('%H:%M:%S', time.gmtime(round(time.time() - start_time, 2)))
 
-            elapsed_time = round(time.time() - start_time, 2)
             n = len(datos) - 1
             if n > 0:
                 tablestr = tabulate(
@@ -253,9 +253,11 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
                     log.info("Data saved: {0}".format(data_file))
                 else:
                      print(tablestr)
-                log.info("Found {0} items in {1} secs".format(n, elapsed_time))
+
+
+                log.info("Found {0} items in {1}".format(n, elapsed_time))
             else:
-                log.error("Data not found in {0} secs".format(elapsed_time))
+                log.error("Data not found in {0}".format(elapsed_time))
         else:
             log.info("Model: {} not implemented".format(data))
 
