@@ -26,7 +26,7 @@ def datos_marca_inpi(driver, parametros, log, inputfile=None, tmpdir=os.getcwd()
         #log.info("connect to: {0}".format(url))
         driver.get(url)
 
-        tipo = WebDriverWait(driver, 10).until(
+        tipo = WebDriverWait(driver, 5).until(
             EC.visibility_of_element_located((By.XPATH, parametros["tipo_marca_xpath"]))
         )
         denominacion = driver.find_element_by_xpath(parametros["denominacion_xpath"])
@@ -47,7 +47,17 @@ def datos_marca_inpi(driver, parametros, log, inputfile=None, tmpdir=os.getcwd()
     i = 1
     for acta_a_buscar in actas:
         acta_a_buscar = acta_a_buscar.strip()
-        datos.append(_get_acta_data(acta_a_buscar))
+
+        try:
+            # a = 1/0
+            datos.append(_get_acta_data(acta_a_buscar))
+        except Exception as err:
+            datos.append(
+                [unidecode.unidecode(acta_a_buscar),
+                "",
+                "!!!Error: {0}".format(err)]
+                )
+
         widgets[0] = FormatLabel('[Acta: {0}]'.format(acta_a_buscar))
         bar.update(i)
         i = i + 1
