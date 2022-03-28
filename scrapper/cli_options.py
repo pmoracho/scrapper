@@ -16,17 +16,22 @@ def _my_gettext(s):
 gettext.gettext = _my_gettext
 
 import argparse
-from globals import __appname__
-from globals import __appdesc__
-from globals import __copyright__
-from globals import __version__
-from globals import __author__
+
+from scrapper.__version__  import __version__
+from scrapper.__version__  import NAME
+from scrapper.__version__  import DESCRIPTION
+from scrapper.__version__  import URL
+from scrapper.__version__  import AUTHOR
+from scrapper.__version__  import EMAIL
+from scrapper.__version__  import VERSION
+from scrapper.__version__  import COPYRIGHT
+
 
 
 def init_argparse():
     """Inicializar parametros del programa."""
-    cmdparser = argparse.ArgumentParser(prog=__appname__,
-                                        description="%s\n%s\n" % (__appdesc__, __copyright__),
+    cmdparser = argparse.ArgumentParser(prog=NAME,
+                                        description="%s\n%s\n" % (DESCRIPTION, COPYRIGHT),
                                         epilog="",
                                         add_help=True,
                                         formatter_class=make_wide(argparse.HelpFormatter, w=80, h=48)
@@ -41,7 +46,7 @@ def init_argparse():
                     },
                     "--version -v": {
                                 "action":    "version",
-                                "version":    __version__,
+                                "version":    VERSION,
                                 "help":        _("Mostrar el número de versión y salir")
                     },
                     "--show-data -s": {
@@ -75,7 +80,7 @@ def init_argparse():
                                 "type":     str,
                                 "action":   "store",
                                 "dest":     "outputtype",
-                                "default":  "psql",
+                                "default":  "None",
                                 "help":     _("Formato de salida")
                     },
                     "--log-level -n": {
@@ -104,6 +109,13 @@ def init_argparse():
                                 "dest":     "show_browser",
                                 "default":  False,
                                 "help":     _("Muestra el navegador y la interacción")
+                    },
+                    "--input-param -p": {
+                                "type":     str,
+                                "action":   "store",
+                                "dest":     "inputparam",
+                                "default":   None,
+                                "help":      _("Parametro variable de entrada")
                     },
             }
 

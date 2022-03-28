@@ -34,27 +34,29 @@ try:
     gettext.textdomain('scrapper')
 
 
-
-    import cli_options
     import codecs
     import re
     import os
     import logging
     import tempfile
     import time
-    from cli_options import make_wide
     from urllib.parse import urlparse
-    from cotizaciones_bcu import cotizaciones_bcu
-    from datos_marca_inpi import datos_marca_inpi
     from configparser import ConfigParser
     import traceback
-    from tabulate import tabulate
-    from drivers import get_chrome_driver
-    from globals import __appname__
-    from globals import __appdesc__
-    from globals import __copyright__
-    from globals import __version__
-    from globals import __author__
+
+    from scrapper.drivers import get_chrome_driver
+    from scrapper.models.cotizaciones_bcu import cotizaciones_bcu
+    from scrapper.models.datos_marca_inpi import datos_marca_inpi
+    from scrapper.models.zonaprop import zonaprop
+    from scrapper.tabulate import tabulate
+    from scrapper.cli_options import init_argparse
+    from scrapper.__version__  import __version__
+    from scrapper.__version__  import NAME
+    from scrapper.__version__  import DESCRIPTION
+    from scrapper.__version__  import URL
+    from scrapper.__version__  import AUTHOR
+    from scrapper.__version__  import EMAIL
+    from scrapper.__version__  import VERSION
 
 except ImportError as err:
     modulename = err.args[0].partition("'")[-1].rpartition("'")[0]
@@ -150,12 +152,12 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
 {2}
 """
 
-    cmdparser = cli_options.init_argparse()
+    cmdparser = init_argparse()
 
     try:
         args = cmdparser.parse_args()
         if not args.quiet:
-            print(title.format(__appdesc__, __version__, __author__))
+            print(title.format(DESCRIPTION, VERSION, AUTHOR))
     except IOError as msg:
         args.error(str(msg))
 
@@ -168,7 +170,7 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
              loglevel=args.loglevel,
              quiet=args.quiet
     )
-    log.info("Starting {0} - {1} (v{2})".format(__appname__, __appdesc__, __version__))
+    log.info("Starting {0} - {1} (v{2})".format(NAME, DESCRIPTION, VERSION))
 
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
@@ -176,7 +178,7 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
     elif __file__:
         application_path = os.path.dirname(__file__)
 
-    cfgfile = os.path.join(application_path, 'scrapper.cfg')
+    cfgfile = os.path.join(application_path, '../scrapper.cfg')
 
     log.info("Loading config: {}".format(cfgfile))
     config = ConfigParser()
@@ -185,7 +187,6 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
     try:
         config.read_file(codecs.open(cfgfile, "r", "utf8"))
     except FileNotFoundError:
-
 
         errormsg = "No existe el archivo de configuración ({0})".format(cfgfile)
         print(errormsg)
@@ -230,7 +231,10 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
                                 log=log,
                                 parametros=config[section],
                                 inputfile=args.inputfile,
-                                tmpdir=workpath)
+                                tmpdir=workpath,
+                                inputparam=args.inputparam)
+
+                driver.quit()
             except Exception:
                 traceback.print_exc()
 
@@ -238,13 +242,30 @@ $$    $$/ $$    $$/ $$ |  $$ |$$ |  $$ |$$ |      $$ |      $$       |$$ |  $$ |
 
             n = len(datos) - 1
             if n > 0:
+
+                registros = datos[1:]
+                header_row = datos[0]
+
+                if args.outputtype == "None":
+                    registros = []
+                    maxlen = len(max(header_row, key=len))
+                    for r in datos[1:]:
+                        for i, h in enumerate(header_row, 0):
+                            registros.append([h, r[i]])
+                            l = len(max([str(c) for c in r], key=len))
+                            if maxlen < l:
+                                maxlen = l
+
+                    header_row = ["Campo", "Valor"]
+
                 tablestr = tabulate(
-                                tabular_data        = datos[1:],
-                                headers             = datos[0],
-                                tablefmt            = args.outputtype,
-                                stralign            = None if args.outputtype == "csv" else "left",
-                                numalign            = None if args.outputtype == "csv" else "rigth"
-                    )
+                    tabular_data        = registros,
+                    headers             = [] if args.outputtype == "csv" else header_row,
+                    tablefmt            = args.outputtype,
+                    stralign            = None if args.outputtype == "csv" else "left",
+                    numalign            = None if args.outputtype == "csv" else "rigth"
+                )
+
                 if args.outputfile:
                     data_file = os.path.join(args.outputpath, args.outputfile)
                     with open(data_file, "w") as f:
