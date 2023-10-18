@@ -1,4 +1,4 @@
 selenium==3.141.0
-urllib3==1.26.5
+urllib3==1.26.18
 Unidecode==1.2.0
 progressbar2==3.53.1
